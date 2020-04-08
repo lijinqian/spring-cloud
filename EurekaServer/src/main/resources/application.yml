@@ -1,0 +1,18 @@
+server:
+  port: 8761
+
+eureka:
+  client:
+    register-with-eureka: false #是否把自己注册到注册中心
+    fetch-registry: false #是否从注册中心获取信息，只有一个注册中心，故为false
+    service-url:
+      defaultZone: http://user:123456@localhost:8761/eureka/
+  server:
+    enable-self-preservation: false #关闭自我保护模式
+      
+spring:
+  security:
+    user:
+      name: user
+      password: 123456
+    
