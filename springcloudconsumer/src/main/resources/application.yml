@@ -28,6 +28,7 @@ eureka:
     
 #feign日志
 feign:
+  hystrix:    enabled: true
   client:
     config:
       provider: 

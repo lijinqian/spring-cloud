@@ -17,7 +17,7 @@ import com.model.User;
 import feign.codec.Encoder;
 import feign.form.spring.SpringFormEncoder;
 
-@FeignClient(name="provider", configuration = UploadFileSupportConfig.class)
+@FeignClient(name="provider", fallback = UserFeignClientFallBack.class, configuration = UploadFileSupportConfig.class)
 public interface UserFeignClient {
 	
 	@RequestMapping(value = "/provider/user/fget", method = RequestMethod.GET)

@@ -28,10 +28,11 @@ Logger logger = Logger.getLogger(this.getClass());
 	
 	
 	@RequestMapping("feign/get")
-	public User getFeignUser() {
+	public User getFeignUser(String id) {
 		Map<String, String> map = new HashMap<>();
 		map.put("name", "lijinqian");
 		map.put("age", "15");
+		map.put("id", id);
 		User user = userFeignClient.find(map);
 //		Assert.notNull(user, "user is not null");
 		return user;
