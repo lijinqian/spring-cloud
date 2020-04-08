@@ -26,7 +26,7 @@ public class UserController {
 	@RequestMapping("fget")
 	public User find(User user) {
 		System.out.println("map=="+user.toString());
-		return userService.getUserById(null);
+		return userService.getUserById(user.getId());
 	}
 
 }

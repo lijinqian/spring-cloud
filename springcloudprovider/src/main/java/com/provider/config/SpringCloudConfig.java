@@ -19,6 +19,12 @@ import org.springframework.context.annotation.Primary;
 @Configuration
 public class SpringCloudConfig { 
   
+	/**
+	 * 拉取git配置文件，使用的jdbc-url
+	 * 本地配置文件使用的url
+	 * 如果使用本地配置文件，需要把这个方法注掉
+	 * @return
+	 */
   @Bean
   @Primary
   @RefreshScope// 刷新配置文件 
