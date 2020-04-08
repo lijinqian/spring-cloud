@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: config-single-server
+  cloud:    config:      server:        git:          uri: https://github.com/lijinqian/spring-cloud-config
+          username: 937655046@qq.com
+          password: 8830952go
+          default-label: master
