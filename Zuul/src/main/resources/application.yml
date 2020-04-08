@@ -1,0 +1,26 @@
+server:
+  port: 8040
+
+spring:
+  application:
+    name: gateway-zuul
+  servlet:
+    multipart:
+      max-file-size: 204800000 #200M
+      max-request-size: 204800000
+    
+eureka:
+  client:
+    service-url:
+      defaultZone: http://user:123456@localhost:8761/eureka/
+   
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+        - "*"
+        
+logging:
+  level:
+    com.netflix: debug
