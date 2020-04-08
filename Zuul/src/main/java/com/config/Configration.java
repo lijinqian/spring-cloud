@@ -8,7 +8,6 @@ import com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsStreamServl
 
 @Configuration
 public class Configration {
-	
 	/**
 	 * 低版本直接启动即可使用 http://ip:port/hystrix.stream 查看监控信息
 	 * 高版本需要添加本方法方可使用 http://ip:port/hystix.stream 查看监控信息
