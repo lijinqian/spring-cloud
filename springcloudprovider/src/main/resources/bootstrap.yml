@@ -1,0 +1,10 @@
+spring:
+  profiles:
+    active:
+    - dev
+  application:    name: provider
+  cloud:    config:      uri:      - http://localhost:3301
+      label: master
+      profile: dev
+management:  endpoint:    shutdown:      enabled: false
+  endpoints:    web:      exposure:        include:        - "*"
