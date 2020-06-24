@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.igloo.smarthome.mapper.repair.RepairApplyMapper">
+
+	<select id="getUncompleteByLockId" resultType="RepairApply">
+		select 
+			ra.* 
+		from repair_apply_lock ral 
+			inner join repair_apply ra on ral.apply_no = ra.apply_no
+		where ral.lock_id = #{lockId} and ra.cancelled = 0  and and ra.status not in (6, 30)
+		limit 1
+	</select>
+	
+	<select id="getRepairApply" resultType="RepairApply">
+		select 
+			ra.*, ifnull(l.alias, l.name) lock_name
+		from repair_apply ra 
+			left join repair_apply_lock ral on ra.apply_no = ral.apply_no
+			left join `lock` l on ral.lock_id = l.lock_id
+		<where>
+			<if test="userId != null and !userId.isEmpty()">
+				and ra.user_id = #{userId}
+			</if>
+		</where>
+		limit #{start}, #{limit}
+	</select>
+	
+</mapper>

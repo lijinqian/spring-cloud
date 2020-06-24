@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.igloo.smarthome.mapper.KeyboardMapper">
+	
+	<select id="checkUsedKeyboards" resultType="Integer">
+		select count(1) from `keyboard` where lock_id = #{lockId} and keyboard_pwd = #{password}
+	</select>
+
+	<select id="list" resultType="KeyboardPwdVo">
+		select k.keyboard_pwd_id, k.create_date, k.keyboard_pwd,k.delete_type,k.alias,
+		k.keyboard_pwd_type, k.start_date, k.end_date,k.first_time,
+		(select IFNULL(phone,email) from `user` where id = k.sender_id) sendUser
+		from keyboard k
+		<where>
+			and k.delete_type = 0
+			<if test="isAdmin" >
+				and k.lock_id = #{lockId}
+			</if>
+			<if test="!isAdmin" >
+				and k.sender_id = #{userId}
+			</if>
+		</where>
+		order by k.create_date desc
+		limit #{start}, #{pageSize}
+	</select>
+	
+	<update id="delKeyboardByLockId" >
+		update  `keyboard` set delete_type = #{delType}
+		 where lock_id = #{lockId}
+	</update>
+	
+	<update id="delKeyboardByLockIdAndSender">
+		update  `keyboard` set delete_type = #{delType}
+		 where lock_id = #{lockId}
+		and sender_id = #{userId}
+	</update>
+	
+	<update id="updateNormalPwd2Deleted">
+		update keyboard k set k.delete_type = 1 where k.lock_id = #{lockId} and k.create_date <![CDATA[<]]> #{date} and k.first_time is not null
+	</update>
+	
+	<update id="deleteUsedKeyboard">
+		update  `keyboard` set delete_type = #{deleteType}
+		where lock_id = #{lockId}
+		and delete_type = 0
+		and first_time is not null
+	</update>
+	
+	<select id="getUsedKeyboards" resultType="Integer">
+		select count(1)
+		from `keyboard`
+		where lock_id = #{lockId}
+		and delete_type = 0
+		and keyboard_pwd != #{password}
+		and first_time is not null
+	</select>
+	
+</mapper>

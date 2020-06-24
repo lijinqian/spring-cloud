@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.igloo.smarthome.mapper.OperationLogMapper">
+
+	<select id="getLogByLockId" resultType="OperationLogVo">
+		select 
+			ol.id, ol.content, ol.create_date, ol.event, ol.password,
+			(case when ol.event = 3 then null else ifnull(ifnull(u.nickname, u.phone), u.email) end) nickname, 
+			(case when ol.event = 3 then null else u.avatar end) avatar
+		from operation_log ol
+		left join user u
+			on ol.user_id = u.id
+		<where>
+			and ol.lock_id = #{lockId}
+			and ol.event = 3
+		</where>
+	</select>
+	
+	<select id="getLog" resultType="OperationLogVo">
+		select 
+			ol.id, ol.content, ol.create_date, ol.event, ol.password,
+			(case when ol.event = 3 then null else ifnull(ifnull(u.nickname, u.phone), u.email) end) nickname, 
+			(case when ol.event = 3 then null else u.avatar end) avatar
+		from operation_log ol
+		left join user u
+			on ol.user_id = u.id
+		<where>
+			and ol.lock_id = #{lockId}
+			and ol.is_delete = 'N'
+			<if test="keyword != null and !keyword.isEmpty()">
+				
+				and (u.nickname = #{keyword} or u.phone = #{keyword} or u.email = #{keyword}  
+				<choose>
+					<when test="keyword == 'Lock with app'.toString() or keyword == 'lock with app'.toString()">
+						or ol.content = #{keyword}
+					</when>
+					<otherwise>
+						or ol.content like concat('%', #{keyword}, '%')
+					</otherwise>
+				</choose>
+				)
+			</if>
+			<choose>
+				<when test="userType == 2">
+					and ( (ol.user_id = #{userId} or exists (select 1 from `key` k where k.key_id = ol.key_id and k.sender_id = #{userId})) and (ol.password is null or ol.password not in (select no_key_pwd from `lock` where lock_id = #{lockId}) ) )
+				</when>
+				<when test="userType == 3">
+					and ol.user_id = #{userId}
+				</when>
+			</choose>
+		</where>
+		order by ol.create_date desc
+		limit #{start}, #{limit}
+	</select>
+	
+	<select id="getLog4Key" resultType="OperationLogVo">
+		select 
+			ol.id, ifnull(ifnull(u.nickname, u.phone), u.email) nickname, u.avatar, ol.content, ol.create_date, ol.event
+		from operation_log ol
+		left join user u
+			on ol.user_id = u.id
+		<where>
+			and ol.key_id = #{keyId}
+			and ol.is_delete = 'N'
+		</where>
+		order by ol.create_date desc
+		limit #{start}, #{limit}
+	</select>
+	
+	<select id="getLog4Password" resultType="OperationLog">
+		select 
+			ol.*
+		from operation_log ol
+		<where>
+			and ol.password = #{password}
+			and ol.is_delete = 'N'
+		</where>
+		order by ol.create_date desc
+		limit #{start}, #{limit}
+	</select>
+	
+	<insert id="batchInsert">
+		insert into operation_log 
+		(id, user_id, lock_id, create_date, content, event, type, password, new_password, key_id)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.id},#{item.userId},#{item.lockId},#{item.createDate},#{item.content},#{item.event},#{item.type},#{item.password},#{item.newPassword}, #{item.keyId})
+		</foreach>
+	</insert>
+	
+	<update id="delIccLog" >
+		update operation_log set is_delete = 'Y' 
+		where password = #{cardNumber}
+	</update>
+	
+	<update id="removeAll">
+		update operation_log ol set ol.is_delete = 'Y' where ol.lock_id = #{lockId}
+		<choose>
+			<when test="userType == 2">
+				and (ol.user_id = #{userId} or exists (select 1 from `key` k where k.key_id = ol.key_id and k.sender_id = #{userId})) 
+			</when>
+			<when test="userType == 3">
+				and ol.user_id = #{userId}
+			</when>
+		</choose>
+	</update>
+	
+</mapper>

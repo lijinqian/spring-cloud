@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.igloo.smarthome.mapper.HomeMapper">
+
+	<select id="getByName" resultType="Home">
+		select h.* from home h where h.user_id = #{userId} and h.name = #{name}
+		<if test="id != null">
+			and h.id != #{id}
+		</if>
+	</select>
+	
+	<select id="getHome" resultType="Home">
+		select 
+			h.id, h.name, h.create_date, (select count(1) from user_lock ul where ul.home_id = h.id) lock_count 
+		from home h where h.user_id = #{userId}
+		union all
+		select null id, 'other' name, null create_date, count(1) lock_count from user_lock ul where ul.user_id = #{userId} and ul.home_id is null
+	</select>
+	
+</mapper>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.igloo.smarthome.mapper.LockMapper">
+
+	<update id="updateHomeId">
+		update `lock` set home_id = #{newHomeId} where home_id = #{oldHomeId}
+	</update>
+	
+	<select id="getUserList" resultType="LockUserVo">
+		select IFNULL(u.nickname,IFNULL(u.phone,u.email)) nickname, IFNULL(u.phone,u.email) userName, u.id userId, u.avatar,
+		k.key_id, k.alias, k.start_date, 
+		k.send_date,  k.type, k.end_date,
+		(CASE WHEN k.type = 1 THEN (CASE WHEN k.end_date <![CDATA[<]]> UNIX_TIMESTAMP(NOW()) THEN '110500' ELSE k.key_status END) 
+		WHEN k.type = 3 THEN (CASE WHEN UNIX_TIMESTAMP(k.send_date) <![CDATA[<]]> (UNIX_TIMESTAMP(NOW()) - 60*60) THEN '110500' ELSE k.key_status END)
+		ELSE k.key_status END) keyStatus,
+		IFNULL(u.phone,u.email) recUser, 
+		(select IFNULL(phone,email) from `user` where id = k.sender_id) sendUser
+		from `key` k, `user` u
+		<where>
+			and k.user_id = u.id
+			and k.lock_id = #{lockId}
+			and k.user_type = '110302'
+			and k.is_clear = 'N'
+			and k.key_status in ('110401', '110402', '110405') 
+		</where>
+		order by k.send_date desc
+		limit #{start}, #{pageSize}
+	</select>
+	
+	<select id="getExpireKeyList" resultType="ExpireKeyVo">
+		select u.avatar, IFNULL(u.nickname,IFNULL(u.phone,u.email)) nickname,
+		(select alias from `lock` where lock_id = k.lock_id) lockAlias,
+		k.start_date, k.end_date,
+		if(floor((k.end_date - UNIX_TIMESTAMP(NOW())) / (60 * 60 * 24)) <![CDATA[<]]> 0, 0, floor((k.end_date - UNIX_TIMESTAMP(NOW())) / (60 * 60 * 24))) dayNum,
+		(CASE WHEN k.type = 1 THEN (CASE WHEN k.end_date <![CDATA[<]]> UNIX_TIMESTAMP(NOW()) THEN '110500' ELSE k.key_status END) 
+		WHEN k.type = 3 THEN (CASE WHEN UNIX_TIMESTAMP(k.send_date) <![CDATA[<]]> (UNIX_TIMESTAMP(NOW()) - 60*60) THEN '110500' ELSE k.key_status END)
+		ELSE k.key_status END) keyStatus
+		from `key` k, `user` u
+		<where>
+			and k.user_id = u.id
+			and k.lock_id = #{lockId}
+			and k.user_type = '110302'
+			and k.is_clear = 'N'
+			and k.key_status in ('110401', '110402', '110405') 
+			and k.type = 1
+			and k.end_date >= UNIX_TIMESTAMP(DATE_SUB(CURDATE(),INTERVAL #{expireDays} DAY))
+		</where>
+		order by dayNum asc
+		limit #{start}, #{pageSize}
+	</select>
+	
+	<select id="getManagerSetup" resultType="LockSetupVo">
+		select l.key_id, l.lock_id, l.`name` lockName,
+		l.mac lockMac, l.electric_quantity, 2 keyType,
+		'0' startDate, '0' endDate, l.alias lockAlias,
+		l.no_key_pwd,
+		IFNULL((select h.`name` from  user_lock ul , home h  where  ul.home_id = h.id and ul.lock_id = l.lock_id and ul.user_id = #{userId}),'other') groupName
+		 from `lock` l
+		where l.lock_id = #{lockId}
+	
+	</select>
+	
+	<select id="getNormalSetup" resultType="LockSetupVo">
+		select l.key_id, l.lock_id, l.`name` lockName,
+		l.mac lockMac, l.electric_quantity, k.type keyType,
+		(case when k.start_date > 0 then FROM_UNIXTIME(k.start_date,'%Y-%m-%d %H:%i') else 0 end) startDate, 
+		(case when k.end_date > 0 then FROM_UNIXTIME(k.end_date,'%Y-%m-%d %H:%i') else 0 end) endDate 
+		 from `lock` l, `key` k 
+		where l.lock_id = k.lock_id and l.lock_id = #{lockId} and k.user_id = #{userId}
+	
+	</select>
+	
+	<select id="list" resultType="LockVo">
+		select k.key_id, k.alias keyAlias, k.start_date, k.end_date,  k.type, k.key_right, k.user_type,
+		(CASE WHEN k.type = 1 THEN (CASE WHEN k.end_date <![CDATA[<]]> UNIX_TIMESTAMP(NOW()) THEN '110500' ELSE k.key_status END) 
+		WHEN k.type = 3 THEN (CASE WHEN UNIX_TIMESTAMP(k.send_date) <![CDATA[<]]> (UNIX_TIMESTAMP(NOW()) - 60*60) THEN '110500' ELSE k.key_status END)
+		ELSE k.key_status END) keyStatus,
+		l.alias lockAlias, la.electric_quantity,
+		if(floor((k.end_date - UNIX_TIMESTAMP(NOW())) / (60 * 60 * 24)) <![CDATA[<]]> 0, 0, floor((k.end_date - UNIX_TIMESTAMP(NOW())) / (60 * 60 * 24))) dayNum
+		from `key` k, `lock` l, lock_attch la
+		where k.lock_id = l.lock_id
+		and l.lock_id = la.lock_id
+		and k.user_id = #{userId}
+		and k.is_clear = 'N'
+		and k.key_status in ('110401', '110402', '110405') 
+		order by k.send_date desc
+		limit #{start}, #{pageSize}
+	</select>
+	
+	<select id="getUndeletedByMac" resultType="lock">
+		select l.* from `lock` l where l.mac = #{mac} and l.status in (1, 2)
+	</select>
+	
+	<update id="transfer" >
+		update `lock` set user_id = #{userId}
+		<where>
+			and lock_id in 
+			<foreach collection="lockIds" item="lockId" separator="," open="(" close=")">
+				#{lockId}
+			</foreach>
+		</where>
+	</update>
+	
+</mapper>

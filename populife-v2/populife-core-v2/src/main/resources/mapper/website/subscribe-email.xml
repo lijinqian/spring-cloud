@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.igloo.smarthome.mapper.website.SubscribeEmailMapper">
+
+	<select id="getSubscribeEmail" resultType="SubscribeEmail">
+		select se.* from subscribe_email se
+		<where>
+			<if test="keyword != null and !keyword.isEmpty()">
+				and se.email like concat(#{keyword}, '%')
+			</if>
+		</where>
+		order by se.create_date desc
+	</select>
+	
+</mapper>

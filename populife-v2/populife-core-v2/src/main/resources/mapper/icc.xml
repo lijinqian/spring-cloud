@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.igloo.smarthome.mapper.IccMapper">
+
+	<select id="getIcc" resultType="Icc">
+		select i.*,
+		(CASE WHEN type = 2 THEN (CASE WHEN end_date <![CDATA[<]]> NOW() THEN 'Y' ELSE 'N' END) ELSE 'N' END) expire
+		 from icc i 
+		where i.lock_id = #{lockId}
+		<if test="keyword != null and !keyword.isEmpty()">
+			and (i.card_number like concat('%', #{keyword}, '%') or i.remark like concat('%', #{keyword}, '%'))
+		</if>
+		limit #{start}, #{limit}
+	</select>
+		
+</mapper>

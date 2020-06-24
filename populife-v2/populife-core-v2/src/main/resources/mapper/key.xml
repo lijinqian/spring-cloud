@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.igloo.smarthome.mapper.KeyMapper">
+
+	<select id="getKeyDetail" resultType="KeyDetailVo">
+		select k.key_id, k.alias, k.start_date, 
+		k.send_date,  k.type, k.end_date,
+		(CASE WHEN k.type = 1 THEN (CASE WHEN k.end_date <![CDATA[<]]> UNIX_TIMESTAMP(NOW()) THEN '110500' ELSE k.key_status END)
+		WHEN k.type = 3 THEN (CASE WHEN UNIX_TIMESTAMP(k.send_date) <![CDATA[<]]> (UNIX_TIMESTAMP(NOW()) - 60*60) THEN '110500' ELSE k.key_status END)
+		ELSE k.key_status END) keyStatus,
+		IFNULL(u.phone,u.email) recUser, u.avatar,
+		(select IFNULL(phone,email) from `user` where id = k.sender_id) sendUser
+		 from `key` k ,  `user` u
+		where k.user_id = u.id and k.key_id = #{keyId}
+	</select>
+	<select id="list" resultType="KeyDetailVo">
+		select k.key_id, k.alias, k.start_date, k.end_date, k.send_date, k.type, k.key_right,
+		(CASE WHEN k.type = 1 THEN (CASE WHEN k.end_date <![CDATA[<]]> UNIX_TIMESTAMP(NOW()) THEN '110500' ELSE k.key_status END) 
+		WHEN k.type = 3 THEN (CASE WHEN UNIX_TIMESTAMP(k.send_date) <![CDATA[<]]> (UNIX_TIMESTAMP(NOW()) - 60*60) THEN '110500' ELSE k.key_status END)
+		ELSE k.key_status END) keyStatus,
+		IFNULL(u.phone,u.email) recUser, u.avatar,
+		(select IFNULL(phone,email) from `user` where id = k.sender_id) sendUser
+		 from `key` k,  `user` u
+		<where>
+			and k.user_id = u.id
+			and k.user_type = '110302'
+			and k.is_clear = 'N'
+			and k.key_status in ('110401', '110402', '110405') 
+			and k.lock_id = #{lockId}
+			<if test="!isAdministrator">
+				and k.sender_id = #{userId}
+			</if>
+		</where>
+		order by k.send_date desc
+		limit #{start}, #{pageSize}
+	</select>
+	
+	<update id="updateKeyStatusByLockId">
+		update `key` set key_status = #{keyStatus}, is_clear = #{isClear} 
+		where lock_id = #{lockId}
+	</update>
+	
+	<update id="updateKeyStatusByLockIdAndSender">
+		update `key` set key_status = #{keyStatus} 
+		where lock_id = #{lockId} 
+		and (sender_id = #{userId} or user_id = #{userId})
+	</update>
+	
+	<select id="findNormalOne" resultType="Key">
+		select * from `key` 
+		where user_id = #{userId}
+		and key_status in ('110401', '110402') 
+		<if test="lockId != null">
+			and lock_id = #{lockId}
+		</if>
+		limit 1
+	</select>
+	
+	<select id="findOne" resultType="Key">
+		select * from `key` 
+		where user_id = #{userId}
+		and key_status in ('110401', '110402', '110405', '110500') 
+		<if test="lockId != null">
+			and lock_id = #{lockId}
+		</if>
+		<if test="keyId != null">
+			and lock_id = (select k1.lock_id from `key` k1 where k1.key_id = #{keyId})
+		</if>
+		limit 1
+	</select>
+	
+	<select id="getAllUserIdsByLockId" resultType="String">
+		select distinct user_id as userId from `key` 
+		<where>
+			and key_status in ('110401', '110402', '110405') 
+			<if test="isAdmin">
+				and lock_id = #{lockId}
+				<if test="!isIncludeMe">
+					and user_type = '110302'
+				</if>
+				
+			</if>
+			<if test="!isAdmin">
+				<if test="isIncludeMe">
+					and (sender_id = #{userId} or user_id = #{userId})
+				</if>
+				<if test="!isIncludeMe">
+					and sender_id = #{userId} 
+				</if>
+			</if>
+		</where> 
+	</select>
+	
+	<select id="getNormalKeyCount" resultType="Integer">
+		select count(1)
+		from `key` k
+		where k.user_id = #{userId}
+		and k.is_clear = 'N'
+		and k.key_status in ('110401', '110402', '110405', '110500') 
+	</select>
+	
+</mapper>

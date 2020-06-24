@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.igloo.smarthome.mapper.UserMessageMapper">
+	
+	<select id="getUserMessage" resultType="UserMessage">
+		select um.* from user_message um where um.user_id = #{userId} order by um.create_date desc limit #{start}, #{limit}
+	</select>
+	
+	<update id="updateInitLockUserMessage">
+		update user_message set content = #{content}
+		where user_id = #{userId} and lock_id = #{lockId}
+	</update>
+	
+</mapper>

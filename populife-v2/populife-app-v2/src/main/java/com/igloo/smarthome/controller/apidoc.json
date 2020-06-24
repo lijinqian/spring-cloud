@@ -1,0 +1,22 @@
+{
+  "name": "Populife服务端接口文档",
+  "title": "Populife服务端接口",
+  "description":"本文档仅限Populife App端开发人员使用，可参照输入、输出参数说明，以及接口在线测试等",
+  "url" : "http://49.234.47.100:2100/",
+  "sampleUrl": "/",
+  "version": "1.0.0",
+  "order": [
+    "UserGroup",
+    "LockGroup",
+    "KeyGroup",
+    "KeyboardGroup",
+    "IccGroup",
+    "SettingGroup",
+    "OperaLogGroup",
+    "HomeGroup",
+    "FeedbackGroup",
+    "UserMessageGroup",
+    "FeedbackGroup",
+    "PushEventGroup"
+  ]
+}
